@@ -26,10 +26,44 @@ df = pd.read_csv('Eviction_Notices.csv', low_memory=False)
 df['datetime'] = pd.Series(map(lambda x: to_year_month(x), df['File Date']))
 grouped = df.groupby('datetime')
 
+causes = 'Non Payment,Breach,Nuisance,Illegal Use,Failure to Sign Renewal,Access Denial,Unapproved Subtenant,Owner Move In,Demolition,Capital Improvement,Substantial Rehab,Ellis Act WithDrawal,Condo Conversion,Roommate Same Unit,Other Cause,Late Payments,Lead Remediation,Development,Good Samaritan Ends'.split(
+  ',')
+causes_count = dict(zip(causes, [[] for x in causes]))
+for group in grouped:
+  sub_total = 0
+  for cause in causes:
+    count = np.count_nonzero(group[1][cause])
+    sub_total = sub_total + count
+    causes_count[cause].append(count)
+
+  # if sub_total < group[1].count()['datetime']:
+  #   print "suspicious:", group
+  #   break
+
 times = map(lambda x: x[0], grouped)
-counts = map(lambda x: x[1].count()['datetime'], grouped)
-plt.grid(True, which='major')
-plt.plot(times, counts)
-# plt.show()
+total_counts = map(lambda x: x[1].count()['datetime'], grouped)
+
+plt.grid(True)
+# plt.plot(times, total_counts)
+colors = [plt.cm.gist_ncar(i) for i in np.linspace(0, 1, len(causes))]
+subplots = []
+for i in xrange(len(causes)):
+  bottom = causes_count[causes[i-1]] if i > 0 else None
+  p = plt.bar(times, causes_count[causes[i]], width=20, color=colors[i], bottom=bottom)
+  subplots.append(p)
+
+from matplotlib.font_manager import FontProperties
+
+fontP = FontProperties()
+fontP.set_size('small')
+# legend([plot1], "title", prop=fontP)
+
+plt.legend(subplots, causes, loc='best')
+
+# for cause, count in causes_count.items():
+#   plt.bar(times, count, bottom=)
+#   break
+
+plt.show()
 
 x = 5
